@@ -66,13 +66,6 @@
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
-
-    <dependency>
-      <groupId>javax</groupId>
-      <artifactId>javaee-api</artifactId>
-      <version>7.0</version>
-      <scope>provided</scope>
-    </dependency>
     
     <dependency>
       <groupId>io.hops.hopsworks</groupId>
@@ -94,6 +87,16 @@
           <artifactId>*</artifactId>
         </exclusion>
       </exclusions> 
+    </dependency>
+
+    <dependency>
+      <groupId>javax</groupId>
+      <artifactId>javaee-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.hops</groupId>
+      <artifactId>hadoop-client</artifactId>
     </dependency>
   </dependencies>
 
