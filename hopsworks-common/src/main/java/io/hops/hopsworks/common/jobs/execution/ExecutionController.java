@@ -56,7 +56,6 @@ import io.hops.hopsworks.common.dao.user.activity.ActivityFlag;
 import io.hops.hopsworks.common.hdfs.DistributedFileSystemOps;
 import io.hops.hopsworks.common.hdfs.DistributedFsService;
 import io.hops.hopsworks.common.hdfs.HdfsUsersController;
-import io.hops.hopsworks.common.jobs.AppInfoDTO;
 import io.hops.hopsworks.common.jobs.AsynchronousJobExecutor;
 import io.hops.hopsworks.common.jobs.JobLogDTO;
 import io.hops.hopsworks.common.jobs.flink.FlinkController;
@@ -79,10 +78,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.exceptions.YarnException;
 import org.apache.hadoop.yarn.util.ConverterUtils;
-import org.influxdb.InfluxDB;
-import org.influxdb.InfluxDBFactory;
-import org.influxdb.dto.Query;
-import org.influxdb.dto.QueryResult;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -91,16 +86,10 @@ import javax.ejb.TransactionAttributeType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Takes care of booting the execution of a job.
@@ -367,105 +356,7 @@ public class ExecutionController {
       + "/jobs/" + execution.getAppId() + "/prox/" + settings.getYarnWebUIAddress()
       + "/cluster/app/" + execution.getAppId();
   }
-  
-  public AppInfoDTO getExecutionAppInfo(Execution execution) {
-    
-    long startTime = System.currentTimeMillis() - 60000;
-    long endTime = System.currentTimeMillis();
-    boolean running = true;
-    if (execution != null) {
-      startTime = execution.getSubmissionTime().getTime();
-      endTime = startTime + execution.getExecutionDuration();
-      running = !execution.getState().isFinalState();
-    }
-    
-    InfluxDB influxDB = null;
-    int nbExecutors = 0;
-    HashMap<Integer, List<String>> executorInfo;
-    try {
-      influxDB = InfluxDBFactory.connect(settings.getInfluxDBAddress(),
-        settings.getInfluxDBUser(),
-        settings.getInfluxDBPW());
-      
-      // Transform application_1493112123688_0001 to 1493112123688_0001
-      // application_ = 12 chars
-      String timestamp_attempt = execution.getAppId().substring(12);
-      
-      Query query = new Query("show tag values from nodemanager with key=\"source\" " + "where source =~ /^.*"
-        + timestamp_attempt + ".*$/", "graphite");
-      QueryResult queryResult = influxDB.query(query, TimeUnit.MILLISECONDS);
-      
-      
-      executorInfo = new HashMap<>();
-      int index = 0;
-      if (queryResult != null && queryResult.getResults() != null) {
-        for (QueryResult.Result res : queryResult.getResults()) {
-          if (res.getSeries() != null) {
-            for (QueryResult.Series series : res.getSeries()) {
-              List<List<Object>> values = series.getValues();
-              if (values != null) {
-                nbExecutors += values.size();
-                for (List<Object> l : values) {
-                  executorInfo.put(index, Stream.of(Objects.toString(l.get(1))).collect(Collectors.toList()));
-                  index++;
-                }
-              }
-            }
-          }
-        }
-      }
-      
-      /*
-       * At this point executor info contains the keys and a list with a single value, the YARN container id
-       */
-      String vCoreTemp;
-      HashMap<String, String> hostnameVCoreCache = new HashMap<>();
-      
-      for (Map.Entry<Integer, List<String>> entry : executorInfo.entrySet()) {
-        query =
-          new Query("select MilliVcoreUsageAvgMilliVcores, hostname from nodemanager where source = \'" + entry.
-            getValue().get(0) + "\' limit 1", "graphite");
-        queryResult = influxDB.query(query, TimeUnit.MILLISECONDS);
-        
-        if (queryResult != null && queryResult.getResults() != null
-          && queryResult.getResults().get(0) != null && queryResult.
-          getResults().get(0).getSeries() != null) {
-          List<List<Object>> values = queryResult.getResults().get(0).getSeries().get(0).getValues();
-          String hostname = Objects.toString(values.get(0).get(2)).split("=")[1];
-          entry.getValue().add(hostname);
-          
-          if (!hostnameVCoreCache.containsKey(hostname)) {
-            // Not in cache, get the vcores of the host machine
-            query = new Query("select AllocatedVCores+AvailableVCores from nodemanager " + "where hostname =~ /.*"
-              + hostname + ".*/ limit 1", "graphite");
-            queryResult = influxDB.query(query, TimeUnit.MILLISECONDS);
-            
-            if (queryResult != null && queryResult.getResults() != null
-              && queryResult.getResults().get(0) != null && queryResult.
-              getResults().get(0).getSeries() != null) {
-              values = queryResult.getResults().get(0).getSeries().get(0).getValues();
-              vCoreTemp = Objects.toString(values.get(0).get(1));
-              entry.getValue().add(vCoreTemp);
-              hostnameVCoreCache.put(hostname, vCoreTemp); // cache it
-            }
-          } else {
-            // It's a hit, skip the database query
-            entry.getValue().add(hostnameVCoreCache.get(hostname));
-          }
-        }
-      }
-      
-    } finally {
-      if (influxDB != null) {
-        influxDB.close();
-        
-      }
-    }
-    
-    AppInfoDTO appInfo = new AppInfoDTO(execution.getAppId(), startTime, running, endTime, nbExecutors, executorInfo);
-    return appInfo;
-  }
-  
+
 //  public Response.ResponseBuilder getExecutionProxy(Execution execution, String param, HttpServletRequest req)
 //    throws JobException, IOException {
 //    String trackingUrl;

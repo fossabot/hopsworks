@@ -92,6 +92,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.deploy.skip>true</maven.deploy.skip>
     <tuples.version>1.2</tuples.version>
+    <selenium.version>3.14.0</selenium.version>
   </properties>
 
   <dependencyManagement>
@@ -106,11 +107,6 @@
         <artifactId>junit</artifactId>
         <version>4.10</version>
         <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <version>1.7.21</version>
       </dependency>
       <dependency>
         <groupId>org.eclipse.persistence</groupId>
@@ -173,12 +169,7 @@
         <version>1.1.0</version>
         <type>jar</type>
       </dependency>
-      <dependency>
-        <groupId>com.101tec</groupId>
-        <artifactId>zkclient</artifactId>
-        <version>0.9</version>
-        <type>jar</type>
-      </dependency>
+
       <dependency>
         <groupId>org.apache.zookeeper</groupId>
         <artifactId>zookeeper</artifactId>
@@ -190,11 +181,13 @@
           </exclusion>
         </exclusions>
       </dependency>
+
       <dependency>
         <groupId>com.google.code.gson</groupId>
         <artifactId>gson</artifactId>
         <version>2.2</version>
       </dependency>
+
       <!-- https://mvnrepository.com/artifact/org.apache.avro/avro -->
       <dependency>
         <groupId>org.apache.avro</groupId>
@@ -207,6 +200,7 @@
         <artifactId>transport</artifactId>
         <version>6.2.3</version>
       </dependency>
+
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-api</artifactId>
@@ -216,18 +210,8 @@
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-core</artifactId>
         <version>2.6.2</version>
+      </dependency>
 
-      </dependency>
-      <dependency>
-        <groupId>commons-beanutils</groupId>
-        <artifactId>commons-beanutils</artifactId>
-        <version>1.9.2</version>
-      </dependency>
-      <dependency>
-        <groupId>com.googlecode.json-simple</groupId>
-        <artifactId>json-simple</artifactId>
-        <version>1.1.1</version>
-      </dependency>
       <dependency>
         <groupId>org.apache.flink</groupId>
         <artifactId>flink-clients_2.11</artifactId>
@@ -346,6 +330,18 @@
         <groupId>commons-lang</groupId>
         <artifactId>commons-lang</artifactId>
         <version>2.6</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-lang3</artifactId>
+        <version>3.8.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.auth0</groupId>
+        <artifactId>java-jwt</artifactId>
+        <version>3.4.0</version>
       </dependency>
 
       <!-- Hops Hive dependecies -->
@@ -493,6 +489,36 @@
         <version>3.1</version>
       </dependency>
 
+      <dependency>
+        <groupId>org.rauschig</groupId>
+        <artifactId>jarchivelib</artifactId>
+        <version>0.7.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.seleniumhq.selenium</groupId>
+        <artifactId>selenium-java</artifactId>
+        <version>${selenium.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+        <version>2.5</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.json</groupId>
+        <artifactId>json</artifactId>
+        <version>20180813</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-fileupload</groupId>
+        <artifactId>commons-fileupload</artifactId>
+        <version>1.3.3</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 

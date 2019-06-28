@@ -73,8 +73,9 @@ import org.apache.http.HttpStatus;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 /**
  * This servlet serve angular-filemanager call<br>
@@ -128,7 +129,7 @@ import org.slf4j.LoggerFactory;
 @Stateless
 public class AngularFileManagerServlet extends HttpServlet {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AngularFileManagerServlet.class);
+  private final static Logger LOG = Logger.getLogger(AngularFileManagerServlet.class.getName());
 
   private static final long serialVersionUID = -8453502699403909016L;
 
@@ -164,7 +165,7 @@ public class AngularFileManagerServlet extends HttpServlet {
     if (configValue != null) {
       if (new SimpleDateFormat(DATE_FORMAT).format(new Date()) == null) {
         // Invalid date format
-        LOG.error("throw invalid date.format");
+        LOG.log(Level.SEVERE, "throw invalid date.format");
         throw new ServletException("invalid date.format");
       }
       DATE_FORMAT = configValue;
@@ -209,7 +210,7 @@ public class AngularFileManagerServlet extends HttpServlet {
           byteBuffer.clear();
         }
       } catch (IOException ex) {
-        LOG.error(ex.getMessage(), ex);
+        LOG.log(Level.SEVERE, ex.getMessage(), ex);
         throw ex;
       } finally {
         response.getOutputStream().flush();
@@ -260,14 +261,14 @@ public class AngularFileManagerServlet extends HttpServlet {
         fileOperation(request, response);
       }
     } catch (ServletException | IOException ex) {
-      LOG.error(ex.getMessage(), ex);
+      LOG.log(Level.SEVERE, ex.getMessage(), ex);
       setError(ex, response);
     }
 
   }
 
   private boolean isSupportFeature(Mode mode) {
-    LOG.debug("check spport {}", mode);
+    LOG.log(Level.FINE, "check spport {}", mode);
     return Boolean.TRUE.equals(enabledAction.get(mode));
   }
 
@@ -294,7 +295,7 @@ public class AngularFileManagerServlet extends HttpServlet {
     // Unlimited file upload, each item will be enumerated as file-1, file-2, etc.
     // [$config.uploadUrl]?destination=/public_html/image.jpg&file-1={..}&file-2={...}
     if (isSupportFeature(Mode.upload)) {
-      LOG.debug("upload now");
+      LOG.log(Level.FINE, "upload now");
       try {
         String destination = null;
         Map<String, InputStream> files = new HashMap<>();
@@ -313,13 +314,13 @@ public class AngularFileManagerServlet extends HttpServlet {
           }
         }
         if (files.isEmpty()) {
-          LOG.debug("file size  = 0");
+          LOG.log(Level.FINE, "file size  = 0");
           throw new Exception("file size  = 0");
         } else {
           for (Map.Entry<String, InputStream> fileEntry : files.entrySet()) {
             Path path = Paths.get(REPOSITORY_BASE_PATH + destination, fileEntry.getKey());
             if (!write(fileEntry.getValue(), path)) {
-              LOG.debug("write error");
+              LOG.log(Level.FINE, "write error");
               throw new Exception("write error");
             }
           }
@@ -332,13 +333,13 @@ public class AngularFileManagerServlet extends HttpServlet {
           out.flush();
         }
       } catch (FileUploadException e) {
-        LOG.error("Cannot parse multipart request: DiskFileItemFactory.parseRequest", e);
+        LOG.log(Level.SEVERE, "Cannot parse multipart request: DiskFileItemFactory.parseRequest", e);
         throw new ServletException("Cannot parse multipart request: DiskFileItemFactory.parseRequest", e);
       } catch (IOException e) {
-        LOG.error("Cannot parse multipart request: item.getInputStream");
+        LOG.log(Level.SEVERE, "Cannot parse multipart request: item.getInputStream");
         throw new ServletException("Cannot parse multipart request: item.getInputStream", e);
       } catch (Exception e) {
-        LOG.error("Cannot write file", e);
+        LOG.log(Level.SEVERE, "Cannot write file", e);
         throw new ServletException("Cannot write file", e);
       }
     } else {
@@ -351,7 +352,7 @@ public class AngularFileManagerServlet extends HttpServlet {
       Files.copy(inputStream, path, StandardCopyOption.REPLACE_EXISTING);
       return true;
     } catch (IOException ex) {
-      LOG.error(ex.getMessage(), ex);
+      LOG.log(Level.SEVERE, ex.getMessage(), ex);
       return false;
     }
   }
@@ -430,7 +431,8 @@ public class AngularFileManagerServlet extends HttpServlet {
         // onlyFolders attr not found
       }
       String path = (String) params.get("path");
-      LOG.debug("list path: Paths.get('{}', '{}'), onlyFolders: {}", REPOSITORY_BASE_PATH, path, onlyFolders);
+      LOG.log(Level.FINE, "list path: Paths.get('{0}', '{1}'), onlyFolders: {2}",
+          new Object[]{REPOSITORY_BASE_PATH, path, onlyFolders});
 
       List<JSONObject> resultList = new ArrayList<>();
       try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Paths.get(REPOSITORY_BASE_PATH, path))) {
@@ -456,7 +458,7 @@ public class AngularFileManagerServlet extends HttpServlet {
       json.put("result", resultList);
       return json;
     } catch (Exception e) {
-      LOG.error("list:" + e.getMessage(), e);
+      LOG.log(Level.SEVERE, "list:" + e.getMessage(), e);
       return error(e.getMessage());
     }
   }
@@ -470,7 +472,7 @@ public class AngularFileManagerServlet extends HttpServlet {
         JSONObject obj = paths.getJSONObject(i);
         Path path = Paths.get(REPOSITORY_BASE_PATH, obj.toString());
         Path mpath = newpath.resolve(path.getFileName());
-        LOG.debug("mv {} to {} exists? {}", path, mpath, Files.exists(mpath));
+        LOG.log(Level.FINE, "mv {0} to {1} exists? {2}", new Object[]{path, mpath, Files.exists(mpath)});
         if (Files.exists(mpath)) {
           return error(mpath.toString() + " already exits!");
         }
@@ -484,7 +486,7 @@ public class AngularFileManagerServlet extends HttpServlet {
       }
       return success(params);
     } catch (IOException e) {
-      LOG.error("move:" + e.getMessage(), e);
+      LOG.log(Level.SEVERE, "move:" + e.getMessage(), e);
       return error(e.getMessage());
     }
   }
@@ -493,7 +495,7 @@ public class AngularFileManagerServlet extends HttpServlet {
     try {
       String path = (String) params.get("item");
       String newpath = (String) params.get("newItemPath");
-      LOG.debug("rename from: {} to: {}", path, newpath);
+      LOG.log(Level.FINE, "rename from: {0} to: {1}", new Object[]{path, newpath});
 
       File srcFile = new File(REPOSITORY_BASE_PATH, path);
       File destFile = new File(REPOSITORY_BASE_PATH, newpath);
@@ -504,7 +506,7 @@ public class AngularFileManagerServlet extends HttpServlet {
       }
       return success(params);
     } catch (IOException e) {
-      LOG.error("rename:" + e.getMessage(), e);
+      LOG.log(Level.SEVERE, "rename:" + e.getMessage(), e);
       return error(e.getMessage());
     }
   }
@@ -520,7 +522,7 @@ public class AngularFileManagerServlet extends HttpServlet {
         Path path = newFileName == null ? Paths.get(REPOSITORY_BASE_PATH,
             obj.toString()) : Paths.get(".", newFileName);
         Path mpath = newpath.resolve(path.getFileName());
-        LOG.debug("mv {} to {} exists? {}", path, mpath, Files.exists(mpath));
+        LOG.log(Level.FINE, "mv {0} to {1} exists? {2}", new Object[]{path, mpath, Files.exists(mpath)});
         if (Files.exists(mpath)) {
           return error(mpath.toString() + " already exits!");
         }
@@ -535,7 +537,7 @@ public class AngularFileManagerServlet extends HttpServlet {
       }
       return success(params);
     } catch (IOException e) {
-      LOG.error("copy:" + e.getMessage(), e);
+      LOG.log(Level.SEVERE, "copy:" + e.getMessage(), e);
       return error(e.getMessage());
     }
   }
@@ -556,7 +558,7 @@ public class AngularFileManagerServlet extends HttpServlet {
       } else {
         success.append(error.length() > 0 ? "\n" : "\nBut remove remove: \n/")
             .append(path.subpath(1, path.getNameCount()).toString());
-        LOG.debug("remove {}", path);
+        LOG.log(Level.FINE, "remove {}", path);
       }
     }
     if (error.length() > 0) {
@@ -576,7 +578,7 @@ public class AngularFileManagerServlet extends HttpServlet {
           (String) params.get("item")).toFile()));
       return json;
     } catch (IOException ex) {
-      LOG.error("getContent:" + ex.getMessage(), ex);
+      LOG.log(Level.SEVERE, "getContent:" + ex.getMessage(), ex);
       return error(ex.getMessage());
     }
   }
@@ -585,14 +587,14 @@ public class AngularFileManagerServlet extends HttpServlet {
     // get content
     try {
       String path = (String) params.get("item");
-      LOG.debug("editFile path: {}", path);
+      LOG.log(Level.FINE, "editFile path: {}", path);
 
       File srcFile = new File(REPOSITORY_BASE_PATH, path);
       String content = (String) params.get("content");
       FileUtils.writeStringToFile(srcFile, content);
       return success(params);
     } catch (IOException e) {
-      LOG.error("editFile:" + e.getMessage(), e);
+      LOG.log(Level.SEVERE, "editFile:" + e.getMessage(), e);
       return error(e.getMessage());
     }
   }
@@ -600,13 +602,13 @@ public class AngularFileManagerServlet extends HttpServlet {
   private JSONObject createFolder(JSONObject params) throws ServletException {
     try {
       Path path = Paths.get(REPOSITORY_BASE_PATH, (String) params.get("newPath"));
-      LOG.debug("createFolder path: {} name: {}", path);
+      LOG.log(Level.FINE, "createFolder path: {} name: {}", path);
       Files.createDirectories(path);
       return success(params);
     } catch (FileAlreadyExistsException ex) {
       return success(params);
     } catch (IOException e) {
-      LOG.error("createFolder:" + e.getMessage(), e);
+      LOG.log(Level.SEVERE, "createFolder:" + e.getMessage(), e);
       return error(e.getMessage());
     }
   }
@@ -620,14 +622,14 @@ public class AngularFileManagerServlet extends HttpServlet {
 //      for (Object path : paths) {
       for (int i = 0; i < paths.length(); i++) {
         JSONObject path = paths.getJSONObject(i);
-        LOG.debug("changepermissions path: {} perms: {} permsCode: {} recursive: {}",
-            path, perms, permsCode, recursive);
+        LOG.log(Level.FINE, "changepermissions path: {0} perms: {1} permsCode: {2} recursive: {3}",
+            new Object[]{path, perms, permsCode, recursive});
         File f = Paths.get(REPOSITORY_BASE_PATH, path.toString()).toFile();
         setPermissions(f, perms, recursive);
       }
       return success(params);
     } catch (IOException e) {
-      LOG.error("changepermissions:" + e.getMessage(), e);
+      LOG.log(Level.SEVERE, "changepermissions:" + e.getMessage(), e);
       return error(e.getMessage());
     }
   }
@@ -660,7 +662,7 @@ public class AngularFileManagerServlet extends HttpServlet {
               @Override
               public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 Path pathInZipFile = zipfs.getPath(file.toString().substring(dest.toString().length()));
-                LOG.debug("compress: '{}'", pathInZipFile);
+                LOG.log(Level.FINE, "compress: '{}'", pathInZipFile);
                 Files.copy(file, pathInZipFile, StandardCopyOption.REPLACE_EXISTING);
                 return FileVisitResult.CONTINUE;
               }
@@ -673,7 +675,7 @@ public class AngularFileManagerServlet extends HttpServlet {
             if (!Files.isDirectory(pathInZipFolder)) {
               Files.createDirectories(pathInZipFolder);
             }
-            LOG.debug("compress: '{}]", pathInZipFile);
+            LOG.log(Level.FINE, "compress: '{}]", pathInZipFile);
             Files.copy(realPath, pathInZipFile, StandardCopyOption.REPLACE_EXISTING);
           }
         }
@@ -685,7 +687,7 @@ public class AngularFileManagerServlet extends HttpServlet {
       }
       return success(params);
     } catch (IOException e) {
-      LOG.error("compress:" + e.getMessage(), e);
+      LOG.log(Level.SEVERE, "compress:" + e.getMessage(), e);
       return error(e.getClass().getSimpleName() + ":" + e.getMessage());
     }
   }
@@ -711,11 +713,11 @@ public class AngularFileManagerServlet extends HttpServlet {
             if (file.getNameCount() > 0) {
               Path dest = folder.resolve(file.getNameCount() < 1 ? "" : 
                   file.subpath(0, file.getNameCount()).toString());
-              LOG.debug("extract {} to {}", file, dest);
+              LOG.log(Level.FINE, "extract {0} to {1}", new Object[]{file, dest});
               try {
                 Files.copy(file, dest, StandardCopyOption.REPLACE_EXISTING);
               } catch (Exception ex) {
-                LOG.error(ex.getMessage(), ex);
+                LOG.log(Level.SEVERE, ex.getMessage(), ex);
               }
             }
             return FileVisitResult.CONTINUE;
@@ -738,7 +740,7 @@ public class AngularFileManagerServlet extends HttpServlet {
       if (genFolder) {
         FileUtils.deleteQuietly(folder.toFile());
       }
-      LOG.error("extract:" + e.getMessage(), e);
+      LOG.log(Level.SEVERE, "extract:" + e.getMessage(), e);
       return error(e.getMessage());
     }
   }
