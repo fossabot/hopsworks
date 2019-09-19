@@ -2,6 +2,7 @@
 
 [![Join the chat at https://gitter.im/hopshadoop/hopsworks](https://badges.gitter.im/hopshadoop/services.png)](https://gitter.im/hopshadoop/hopsworks)
 [![Google Group](https://img.shields.io/badge/google-group-blue.svg)](https://groups.google.com/forum/#!forum/hopshadoop)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FSirOibaf%2Fhopsworks.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2FSirOibaf%2Fhopsworks?ref=badge_shield)
 
 
 <a href=""><img src="https://www.hops.io/wp-content/uploads/2018/07/Plants-Hops-icon-50x50-e1532970413999.png" align="left" hspace="10" vspace="6"></a>
@@ -154,3 +155,7 @@ To skip tests that need to run inside a vm
 ```
 When the test is done if `LAUNCH_BROWSER` is set to true in `.env`, it will open the test report in a browser.
 
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FSirOibaf%2Fhopsworks.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2FSirOibaf%2Fhopsworks?ref=badge_large)
